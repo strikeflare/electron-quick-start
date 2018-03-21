@@ -1,6 +1,7 @@
 const electron = require('electron')
 // Module to control application life.
 const app = electron.app
+const Menu = electron.Menu
 // Module to create native browser window.
 const BrowserWindow = electron.BrowserWindow
 
@@ -11,9 +12,37 @@ const url = require('url')
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow
 
-function createWindow () {
+function createWindow() {
   // Create the browser window.
-  mainWindow = new BrowserWindow({width: 800, height: 600})
+  mainWindow = new BrowserWindow({ width: 800, height: 600})
+
+  mainWindow.webContents.on('new-window', (event, url, frame, disposition, options) => {
+
+    // The only way to get the current browser window is to create a new one by setting to default       
+    event.preventDefault();
+    // set options
+    options.show = false;
+
+    let childWin = new BrowserWindow(options);
+    event.newGuest = childWin;
+    childWin.loadURL(url);
+
+    const template = [{
+      label: 'View',
+      submenu: [{
+        role: 'reload',
+        accelerator: ''
+      }]
+    }];
+
+    const childMenu = Menu.buildFromTemplate(template);
+    childWin.setMenu(childMenu);
+
+    childWin.once('ready-to-show', () => childWin.show());
+  });
+
+
+
 
   // and load the index.html of the app.
   mainWindow.loadURL(url.format({
